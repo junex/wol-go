@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WOL-GO - Wake On LAN Manager</title>
 
     <!-- Bootstrap CSS (CDN) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.6/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Font Awesome (CDN) -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
 
     <!-- 自定义样式 -->
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
+
 <body>
     <!-- 导航栏 -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
@@ -72,7 +74,8 @@
     <!-- 页脚 -->
     <footer class="footer py-3 bg-light mt-5">
         <div class="container text-center">
-            <span class="text-muted">WOL-GO v2.0 - Go版本 | <a href="https://github.com/junex/wol-go" target="_blank">GitHub</a></span>
+            <span class="text-muted">WOL-GO v2.0 - Go版本 | <a href="https://github.com/junex/wol-go"
+                    target="_blank">GitHub</a></span>
         </div>
     </footer>
 
@@ -89,16 +92,17 @@
                         <input type="hidden" id="computer-mac-original">
 
                         <div class="mb-3">
-                            <label for="computer-name" class="form-label">设备名称 <span class="text-danger">*</span></label>
+                            <label for="computer-name" class="form-label">设备名称 <span
+                                    class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="computer-name" required
                                 placeholder="例如：我的电脑、NAS、服务器">
                         </div>
 
                         <div class="mb-3">
-                            <label for="computer-mac" class="form-label">MAC 地址 <span class="text-danger">*</span></label>
+                            <label for="computer-mac" class="form-label">MAC 地址 <span
+                                    class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="computer-mac" required
-                                placeholder="XX:XX:XX:XX:XX:XX"
-                                pattern="^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$">
+                                placeholder="XX:XX:XX:XX:XX:XX" pattern="^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$">
                             <div class="form-text">格式：XX:XX:XX:XX:XX:XX（使用冒号分隔）</div>
                         </div>
 
@@ -109,7 +113,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="computer-type" class="form-label">检测方式 <span class="text-danger">*</span></label>
+                            <label for="computer-type" class="form-label">检测方式 <span
+                                    class="text-danger">*</span></label>
                             <select class="form-select" id="computer-type" required>
                                 <option value="icmp">ICMP (Ping)</option>
                                 <option value="arp">ARP</option>
@@ -120,8 +125,8 @@
 
                         <div class="mb-3" id="tcp-port-group" style="display: none;">
                             <label for="computer-port" class="form-label">端口号</label>
-                            <input type="number" class="form-control" id="computer-port"
-                                placeholder="8080" min="1" max="65535">
+                            <input type="number" class="form-control" id="computer-port" placeholder="8080" min="1"
+                                max="65535">
                             <div class="form-text">TCP 检测时使用的端口号</div>
                         </div>
                     </form>
@@ -135,7 +140,7 @@
     </div>
 
     <!-- Bootstrap JS (CDN) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.6/js/bootstrap.bundle.min.js"></script>
 
     <!-- 自定义脚本 -->
     <script src="/static/js/config.js"></script>
@@ -144,4 +149,5 @@
     <script src="/static/js/websocket.js"></script>
     <script src="/static/js/app.js"></script>
 </body>
+
 </html>
