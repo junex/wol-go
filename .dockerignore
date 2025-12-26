@@ -1,0 +1,34 @@
+*.md
+.git
+.github
+assets
+docs
+.env
+.env.local
+.gitignore
+.dockerignore
+Makefile
+
+# Build artifacts
+build/
+dist/
+*.test
+*.out
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Debug
+debug
+*.log
+
+# 原始 web 目录（已嵌入到 internal/api/web）
+web/
+
+# 其他
+appdata/
+.DS_Store
+Thumbs.db

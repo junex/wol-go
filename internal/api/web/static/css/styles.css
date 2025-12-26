@@ -1,0 +1,59 @@
+/* 状态指示器 */
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: auto;
+}
+
+.status-indicator.awake {
+    background-color: #28a745;
+    box-shadow: 0 0 8px rgba(40, 167, 69, 0.6);
+}
+
+.status-indicator.asleep {
+    background-color: #dc3545;
+    box-shadow: 0 0 8px rgba(220, 53, 69, 0.6);
+}
+
+/* 设备卡片 */
+.computer-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.computer-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 搜索框 */
+#search-input {
+    border-radius: 20px 0 0 20px;
+}
+
+#search-input + .input-group-text {
+    border-radius: 0 20px 20px 0;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .computer-card .btn-group {
+        flex-direction: column;
+    }
+
+    .computer-card .btn-group .btn {
+        width: 100%;
+        margin-bottom: 0.25rem;
+    }
+}
+
+/* 加载动画 */
+.spinner-loading {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
