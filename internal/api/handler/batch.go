@@ -185,7 +185,7 @@ func trimSpace(s string) string {
 
 // RegisterRoutes 注册批量操作路由
 func (h *BatchHandler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/api/computers/batch/wake", h.BatchWake).Methods("POST")
-	router.HandleFunc("/api/computers/batch/sleep", h.BatchSleep).Methods("POST")
-	router.HandleFunc("/api/computers/batch/status", h.BatchStatus).Methods("GET")
+	router.HandleFunc("/computers/batch/wake", h.BatchWake).Methods("POST")
+	router.HandleFunc("/computers/batch/sleep", h.BatchSleep).Methods("POST")
+	router.HandleFunc("/computers/batch/status", h.BatchStatus).Methods("GET")
 }

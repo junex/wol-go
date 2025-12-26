@@ -350,6 +350,24 @@ class WOLGO {
                 toast.success(
                     `状态检查完成: 在线 ${onlineCount} / 离线 ${Object.keys(results).length - onlineCount}`
                 );
+
+                // 根据批量检查的结果更新界面状态
+                selected.forEach(mac => {
+                    const computer = this.computers.find(c => c.mac_address === mac);
+                    if (computer && results[mac] !== undefined) {
+                        const statusIndicator = document.querySelector(`[data-mac="${mac}"] .status-indicator`);
+                        if (statusIndicator) {
+                            statusIndicator.className = 'status-indicator';
+                            if (results[mac]) {
+                                statusIndicator.classList.add('awake');
+                                statusIndicator.title = '在线';
+                            } else {
+                                statusIndicator.classList.add('asleep');
+                                statusIndicator.title = '离线';
+                            }
+                        }
+                    }
+                });
             }
         } catch (error) {
             toast.error('批量状态检查失败: ' + error.message);

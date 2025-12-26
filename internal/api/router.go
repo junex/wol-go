@@ -85,6 +85,9 @@ func (r *Router) SetupRoutes() {
 	// WebSocket 连接
 	api.HandleFunc("/ws", wsHandler.HandleWebSocket)
 
+	// 批量操作（必须在 /computers/{mac} 之前注册，避免路由冲突）
+	batchHandler.RegisterRoutes(api)
+
 	// 设备管理
 	api.HandleFunc("/computers", compHandler.ListComputers).Methods(http.MethodGet)
 	api.HandleFunc("/computers", compHandler.AddComputer).Methods(http.MethodPost)
@@ -100,9 +103,6 @@ func (r *Router) SetupRoutes() {
 	api.HandleFunc("/computers/{mac}/crons/sleep", cronHandler.AddSleepCron).Methods(http.MethodPost)
 	api.HandleFunc("/computers/{mac}/crons/wake", cronHandler.DeleteWakeCron).Methods(http.MethodDelete)
 	api.HandleFunc("/computers/{mac}/crons/sleep", cronHandler.DeleteSleepCron).Methods(http.MethodDelete)
-
-	// 批量操作
-	batchHandler.RegisterRoutes(api)
 
 	// 网络扫描
 	api.HandleFunc("/network/arp-scan", networkHandler.ARPScan).Methods(http.MethodGet)
