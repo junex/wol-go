@@ -16,6 +16,9 @@ RUN go mod download
 # 复制源代码
 COPY . .
 
+# 同步 web 目录到 internal/api/web（用于开发时修改 web，构建时自动同步）
+RUN cp -r web/* internal/api/web/
+
 # 构建应用（静态链接，无 CGO）
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags="-s -w" -o wol-go ./cmd/server
 

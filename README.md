@@ -146,12 +146,15 @@ go mod download
 # 运行
 go run ./cmd/server
 
-# 构建
+# 构建（需先同步 web 目录）
+cp -r web/* internal/api/web/
 go build -o build/wol-go ./cmd/server
 
 # 测试
 go test -v ./...
 ```
+
+**注意**：本项目默认在 `web/` 目录下修改前端文件，构建前需要将其同步到 `internal/api/web/` 目录（Docker 构建会自动执行此步骤）。
 
 ## 📚 更多文档
 
