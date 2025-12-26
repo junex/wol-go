@@ -1,0 +1,36 @@
+# ===================================
+# 使用预编译的二进制文件构建镜像
+# ===================================
+FROM alpine:3.20
+
+# 安装运行时依赖
+RUN apk add --no-cache \
+    fping \
+    arp-scan \
+    netcat-openbsd \
+    curl \
+    ca-certificates \
+    && rm -rf /var/cache/apk/*
+
+# 创建工作目录
+WORKDIR /app
+
+# 复制二进制文件
+COPY wol-go-linux-amd64 /usr/local/bin/wol-go
+RUN chmod +x /usr/local/bin/wol-go
+
+# 创建数据目录
+RUN mkdir -p /app/db /etc/cron.d
+
+# 复制启动脚本
+COPY docker/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# 暴露端口
+EXPOSE 5000
+
+# 设置卷
+VOLUME ["/app/db", "/etc/cron.d"]
+
+# 入口点
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
