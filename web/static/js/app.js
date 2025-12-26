@@ -102,6 +102,12 @@ class WOLGO {
         const container = document.getElementById('computers-container');
         if (!container) return;
 
+        // 更新设备数量显示
+        const deviceCount = document.getElementById('device-count');
+        if (deviceCount) {
+            deviceCount.textContent = `${this.filteredComputers.length} 台设备`;
+        }
+
         if (this.filteredComputers.length === 0) {
             container.innerHTML = `
                 <div class="alert alert-info" role="alert">
