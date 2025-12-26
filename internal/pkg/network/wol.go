@@ -29,11 +29,7 @@ func SendMagicPacket(macAddr string, broadcastAddr string) error {
 	}
 	defer conn.Close()
 
-	// 允许广播
-	udpConn := conn.(*net.UDPConn)
-	addr, _ := net.ResolveUDPAddr("udp", broadcastAddr+":9")
-
-	_, err = udpConn.WriteTo(packet, addr)
+	_, err = conn.Write(packet)
 	if err != nil {
 		return fmt.Errorf("发送魔术包失败: %w", err)
 	}
