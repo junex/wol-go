@@ -144,6 +144,20 @@ class APIClient {
         return this.get(CONFIG.endpoints.arpScan);
     }
 
+    // 批量操作
+    async batchWake(macAddresses) {
+        return this.post(CONFIG.endpoints.batch.wake, { mac_addresses: macAddresses });
+    }
+
+    async batchSleep(macAddresses) {
+        return this.post(CONFIG.endpoints.batch.sleep, { mac_addresses: macAddresses });
+    }
+
+    async batchCheckStatus(macAddresses) {
+        const macParam = macAddresses.join(',');
+        return this.get(`${CONFIG.endpoints.batch.status}?mac=${encodeURIComponent(macParam)}`);
+    }
+
     // 健康检查
     async healthCheck() {
         return this.get(CONFIG.endpoints.health);
