@@ -32,7 +32,7 @@
     border-radius: 20px 0 0 20px;
 }
 
-#search-input + .input-group-text {
+#search-input+.input-group-text {
     border-radius: 0 20px 20px 0;
 }
 
@@ -54,6 +54,44 @@
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* 确保页脚始终在底部 */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container-lg {
+    flex: 1;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+/* 改进的唤醒按钮样式 */
+.status-power {
+    position: relative;
+}
+
+.status-power i {
+    color: white;
+}
+
+.status-power:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
+}
+
+.status-power:active {
+    transform: scale(0.95);
 }
