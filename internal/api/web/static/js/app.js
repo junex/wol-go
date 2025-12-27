@@ -8,6 +8,7 @@ class WOLGO {
         this.statusUpdateInterval = null;
         this.selectedComputers = new Set(); // 选中的设备 MAC 地址
         this.computerModal = null; // 模态框实例
+        this.setupWebSocketListeners();
     }
 
     async init() {
@@ -618,6 +619,74 @@ class WOLGO {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    /**
+     * 设置 WebSocket 事件监听器
+     */
+    setupWebSocketListeners() {
+        // 等待 wsClient 初始化
+        const setupListeners = () => {
+            if (!window.wsClient) {
+                setTimeout(setupListeners, 100);
+                return;
+            }
+
+            // 监听 WebSocket 重连成功事件
+            window.wsClient.on('reconnect', async () => {
+                console.log('[App] WebSocket reconnected, refreshing data...');
+                // 重新获取设备列表
+                await this.loadComputers();
+                this.renderComputers();
+                // 刷新所有设备状态
+                this.updateAllStatuses();
+            });
+
+            // 监听页面可见事件（长时间后台后）
+            window.wsClient.on('page_visible', async (data) => {
+                console.log('[App] Page visible after', data.timeSinceLastConnect, 'ms, refreshing data...');
+                // 重新获取设备列表
+                await this.loadComputers();
+                this.renderComputers();
+                // 刷新所有设备状态
+                this.updateAllStatuses();
+            });
+
+            // 监听 WebSocket 连接成功事件
+            window.wsClient.on('connected', () => {
+                console.log('[App] WebSocket connected');
+            });
+
+            // 监听 WebSocket 断开连接事件
+            window.wsClient.on('disconnected', () => {
+                console.log('[App] WebSocket disconnected');
+            });
+
+            // 监听设备添加事件
+            window.wsClient.on('computer_added', async (data) => {
+                console.log('[App] Computer added via WebSocket:', data);
+                await this.loadComputers();
+                this.renderComputers();
+            });
+
+            // 监听设备更新事件
+            window.wsClient.on('computer_updated', async (data) => {
+                console.log('[App] Computer updated via WebSocket:', data);
+                await this.loadComputers();
+                this.renderComputers();
+            });
+
+            // 监听设备删除事件
+            window.wsClient.on('computer_deleted', async (data) => {
+                console.log('[App] Computer deleted via WebSocket:', data);
+                await this.loadComputers();
+                this.renderComputers();
+            });
+
+            console.log('[App] WebSocket listeners registered');
+        };
+
+        setupListeners();
     }
 }
 

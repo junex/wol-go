@@ -11,6 +11,9 @@ class WebSocketClient {
         this.manualClose = false;
         this.messageHandlers = new Map();
         this.status = 'disconnected'; // disconnected, connecting, connected
+        this.reconnectTimer = null;
+        this.lastConnectTime = 0;
+        this.visibilityHandler = null;
 
         // 默认消息处理器
         this.defaultHandlers = {
@@ -27,12 +30,19 @@ class WebSocketClient {
      * 连接 WebSocket
      */
     connect() {
+        // 清除之前的重连定时器
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
+
         if (this.ws && (this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN)) {
             console.log('[WebSocket] Already connected or connecting');
             return;
         }
 
         this.status = 'connecting';
+        this.lastConnectTime = Date.now();
         console.log('[WebSocket] Connecting to', this.url);
 
         try {
@@ -42,6 +52,9 @@ class WebSocketClient {
                 this.status = 'connected';
                 console.log('[WebSocket] Connected successfully');
                 this.emit('connected', {});
+
+                // 连接成功后重新获取设备列表
+                this.emit('reconnect', { timestamp: this.lastConnectTime });
             };
 
             this.ws.onmessage = (event) => {
@@ -55,8 +68,7 @@ class WebSocketClient {
 
                 // 自动重连（如果不是手动关闭）
                 if (!this.manualClose) {
-                    console.log('[WebSocket] Reconnecting in', this.reconnectDelay, 'ms');
-                    setTimeout(() => this.connect(), this.reconnectDelay);
+                    this.scheduleReconnect();
                 }
             };
 
@@ -71,7 +83,75 @@ class WebSocketClient {
 
             // 自动重连
             if (!this.manualClose) {
-                setTimeout(() => this.connect(), this.reconnectDelay);
+                this.scheduleReconnect();
+            }
+        }
+    }
+
+    /**
+     * 安排重连
+     */
+    scheduleReconnect() {
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+        }
+
+        console.log('[WebSocket] Reconnecting in', this.reconnectDelay, 'ms');
+        this.reconnectTimer = setTimeout(() => {
+            this.reconnectTimer = null;
+            this.connect();
+        }, this.reconnectDelay);
+    }
+
+    /**
+     * 开始监听页面可见性变化
+     */
+    startVisibilityHandler() {
+        if (this.visibilityHandler) {
+            return; // 已经在监听
+        }
+
+        this.visibilityHandler = () => this.handleVisibilityChange();
+        document.addEventListener('visibilitychange', this.visibilityHandler);
+        console.log('[WebSocket] Visibility handler started');
+    }
+
+    /**
+     * 停止监听页面可见性变化
+     */
+    stopVisibilityHandler() {
+        if (this.visibilityHandler) {
+            document.removeEventListener('visibilitychange', this.visibilityHandler);
+            this.visibilityHandler = null;
+            console.log('[WebSocket] Visibility handler stopped');
+        }
+    }
+
+    /**
+     * 处理页面可见性变化
+     */
+    handleVisibilityChange() {
+        if (document.hidden) {
+            console.log('[WebSocket] Page hidden');
+            // 页面隐藏时不需要特殊处理，WebSocket 会自动处理
+        } else {
+            console.log('[WebSocket] Page visible');
+
+            // 页面重新可见时，检查连接状态
+            const timeSinceLastConnect = Date.now() - this.lastConnectTime;
+
+            // 如果超过 30 秒没有连接尝试，强制重新连接
+            if (timeSinceLastConnect > 30000 || !this.isConnected()) {
+                console.log('[WebSocket] Page visible after long time, reconnecting...');
+                this.emit('page_visible', { timeSinceLastConnect });
+
+                // 如果连接已断开，尝试重新连接
+                if (!this.isConnected()) {
+                    this.connect();
+                } else {
+                    // 连接正常，也触发重新获取数据
+                    this.emit('reconnect', { timestamp: Date.now() });
+                }
             }
         }
     }
@@ -81,6 +161,16 @@ class WebSocketClient {
      */
     disconnect() {
         this.manualClose = true;
+
+        // 清除重连定时器
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
+
+        // 停止可见性监听
+        this.stopVisibilityHandler();
+
         if (this.ws) {
             this.ws.close();
             this.ws = null;
@@ -261,6 +351,8 @@ function initWebSocket() {
     if (window.Config && window.Config.WEBSOCKET_URL) {
         wsClient = new WebSocketClient(window.Config.WEBSOCKET_URL);
         wsClient.connect();
+        // 启动页面可见性监听
+        wsClient.startVisibilityHandler();
         console.log('[WebSocket] Client initialized');
     } else {
         console.log('[WebSocket] WebSocket URL not configured, using HTTP polling fallback');
