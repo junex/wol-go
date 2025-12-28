@@ -346,17 +346,49 @@ class WebSocketClient {
 
 // 创建全局 WebSocket 客户端实例（如果配置了 WebSocket URL）
 let wsClient = null;
+let wsInitPromise = null;
 
+// 初始化 WebSocket 并返回 Promise
 function initWebSocket() {
-    if (window.Config && window.Config.WEBSOCKET_URL) {
+    if (wsInitPromise) {
+        return wsInitPromise; // 防止重复初始化
+    }
+
+    wsInitPromise = new Promise((resolve) => {
+        if (wsClient) {
+            resolve(wsClient);
+            return;
+        }
+
+        if (!window.Config?.WEBSOCKET_URL) {
+            console.log('[WebSocket] WebSocket URL not configured, using HTTP polling fallback');
+            resolve(null);
+            return;
+        }
+
         wsClient = new WebSocketClient(window.Config.WEBSOCKET_URL);
         wsClient.connect();
         // 启动页面可见性监听
         wsClient.startVisibilityHandler();
         console.log('[WebSocket] Client initialized');
-    } else {
-        console.log('[WebSocket] WebSocket URL not configured, using HTTP polling fallback');
-    }
+
+        // 等待连接完成再 resolve
+        const checkConnected = () => {
+            if (wsClient.isConnected()) {
+                resolve(wsClient);
+            } else {
+                setTimeout(checkConnected, 100);
+            }
+        };
+        checkConnected();
+    });
+
+    return wsInitPromise;
+}
+
+// 获取 WebSocket 客户端（异步等待）
+function getWebSocketClient() {
+    return wsInitPromise || initWebSocket();
 }
 
 // 页面加载时初始化 WebSocket

@@ -2,10 +2,12 @@
 class APIClient {
     constructor() {
         this.token = localStorage.getItem('auth_token') || null;
+        // 默认请求超时时间（毫秒）
+        this.defaultTimeout = 10000;
     }
 
-    // 通用请求方法
-    async request(url, options = {}) {
+    // 通用请求方法（带超时）
+    async request(url, options = {}, timeout = this.defaultTimeout) {
         const headers = {
             'Content-Type': 'application/json',
             ...options.headers
@@ -21,8 +23,26 @@ class APIClient {
         };
 
         try {
-            const response = await fetch(url, config);
-            const data = await response.json();
+            // 创建超时 Promise
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('请求超时，请检查网络连接')), timeout);
+            });
+
+            // 发起请求
+            const fetchPromise = fetch(url, config);
+
+            // 竞速：请求 vs 超时
+            const response = await Promise.race([fetchPromise, timeoutPromise]);
+
+            // 尝试解析 JSON
+            let data;
+            const text = await response.text();
+            try {
+                data = JSON.parse(text);
+            } catch {
+                // 如果不是 JSON，创建一个错误响应对象
+                data = { success: false, message: text || '请求失败' };
+            }
 
             if (!response.ok) {
                 throw new Error(data.error?.message || data.message || '请求失败');
@@ -30,7 +50,11 @@ class APIClient {
 
             return data;
         } catch (error) {
-            console.error('API 请求失败:', error);
+            if (error.message === '请求超时，请检查网络连接') {
+                console.error('API 请求超时:', url);
+            } else {
+                console.error('API 请求失败:', error);
+            }
             throw error;
         }
     }

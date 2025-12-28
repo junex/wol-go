@@ -8,6 +8,7 @@ class WOLGO {
         this.statusUpdateInterval = null;
         this.selectedComputers = new Set(); // 选中的设备 MAC 地址
         this.computerModal = null; // 模态框实例
+        // 异步设置 WebSocket 监听器，不阻塞初始化
         this.setupWebSocketListeners();
     }
 
@@ -16,19 +17,35 @@ class WOLGO {
             // 初始化模态框
             this.initComputerModal();
 
+            // 绑定事件（先绑定，确保 UI 可交互）
+            this.bindEvents();
+
             // 加载计算机列表
             await this.loadComputers();
 
             // 渲染计算机列表
             this.renderComputers();
 
-            // 启动状态更新
-            this.startStatusUpdates();
+            // 延迟启动状态更新，避免阻塞首次渲染
+            setTimeout(() => {
+                this.updateAllStatuses();
+                this.startStatusUpdates();
+            }, 100);
 
-            // 绑定事件
-            this.bindEvents();
         } catch (error) {
-            toast.error('加载失败: ' + error.message);
+            // 即使加载失败，也显示错误信息并清空加载状态
+            const container = document.getElementById('computers-container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        加载失败: ${this.escapeHtml(error.message)}
+                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="location.reload()">
+                            <i class="fas fa-redo"></i> 重试
+                        </button>
+                    </div>
+                `;
+            }
         }
     }
 
@@ -58,7 +75,8 @@ class WOLGO {
         }
     }
 
-    async loadComputers() {
+    async loadComputers(retryCount = 0) {
+        const maxRetries = 2;
         try {
             const response = await api.getComputers();
             if (response.success) {
@@ -67,6 +85,12 @@ class WOLGO {
             }
         } catch (error) {
             console.error('加载计算机失败:', error);
+            // 如果是超时错误且还有重试次数，则重试
+            if (error.message.includes('请求超时') && retryCount < maxRetries) {
+                console.log(`[App] 重试加载设备列表 (${retryCount + 1}/${maxRetries})...`);
+                await new Promise(resolve => setTimeout(resolve, 1000)); // 等待 1 秒后重试
+                return this.loadComputers(retryCount + 1);
+            }
             throw error;
         }
     }
@@ -377,10 +401,21 @@ class WOLGO {
 
     async updateAllStatuses() {
         const indicators = document.querySelectorAll('.status-indicator');
-        for (const indicator of indicators) {
+        if (indicators.length === 0) return;
+
+        // 收集所有状态检查任务
+        const statusTasks = Array.from(indicators).map(indicator => {
+            const mac = indicator.closest('[data-mac]')?.getAttribute('data-mac');
             const ip = indicator.getAttribute('data-ip');
             const testType = indicator.getAttribute('data-test-type');
-            this.updateStatus(ip, testType, indicator);
+            return { mac, ip, testType, indicator };
+        }).filter(task => task.mac); // 过滤掉无效的
+
+        // 并发执行所有状态检查（限制并发数为 5）
+        const CONCURRENT_LIMIT = 5;
+        for (let i = 0; i < statusTasks.length; i += CONCURRENT_LIMIT) {
+            const batch = statusTasks.slice(i, i + CONCURRENT_LIMIT);
+            await Promise.all(batch.map(task => this.updateStatus(task.ip, task.testType, task.indicator)));
         }
     }
 
@@ -624,16 +659,17 @@ class WOLGO {
     /**
      * 设置 WebSocket 事件监听器
      */
-    setupWebSocketListeners() {
-        // 等待 wsClient 初始化
-        const setupListeners = () => {
-            if (!window.wsClient) {
-                setTimeout(setupListeners, 100);
+    async setupWebSocketListeners() {
+        try {
+            const wsClient = await getWebSocketClient();
+
+            if (!wsClient) {
+                console.log('[App] WebSocket not available, skipping listeners setup');
                 return;
             }
 
             // 监听 WebSocket 重连成功事件
-            window.wsClient.on('reconnect', async () => {
+            wsClient.on('reconnect', async () => {
                 console.log('[App] WebSocket reconnected, refreshing data...');
                 // 重新获取设备列表
                 await this.loadComputers();
@@ -643,7 +679,7 @@ class WOLGO {
             });
 
             // 监听页面可见事件（长时间后台后）
-            window.wsClient.on('page_visible', async (data) => {
+            wsClient.on('page_visible', async (data) => {
                 console.log('[App] Page visible after', data.timeSinceLastConnect, 'ms, refreshing data...');
                 // 重新获取设备列表
                 await this.loadComputers();
@@ -653,40 +689,40 @@ class WOLGO {
             });
 
             // 监听 WebSocket 连接成功事件
-            window.wsClient.on('connected', () => {
+            wsClient.on('connected', () => {
                 console.log('[App] WebSocket connected');
             });
 
             // 监听 WebSocket 断开连接事件
-            window.wsClient.on('disconnected', () => {
+            wsClient.on('disconnected', () => {
                 console.log('[App] WebSocket disconnected');
             });
 
             // 监听设备添加事件
-            window.wsClient.on('computer_added', async (data) => {
+            wsClient.on('computer_added', async (data) => {
                 console.log('[App] Computer added via WebSocket:', data);
                 await this.loadComputers();
                 this.renderComputers();
             });
 
             // 监听设备更新事件
-            window.wsClient.on('computer_updated', async (data) => {
+            wsClient.on('computer_updated', async (data) => {
                 console.log('[App] Computer updated via WebSocket:', data);
                 await this.loadComputers();
                 this.renderComputers();
             });
 
             // 监听设备删除事件
-            window.wsClient.on('computer_deleted', async (data) => {
+            wsClient.on('computer_deleted', async (data) => {
                 console.log('[App] Computer deleted via WebSocket:', data);
                 await this.loadComputers();
                 this.renderComputers();
             });
 
             console.log('[App] WebSocket listeners registered');
-        };
-
-        setupListeners();
+        } catch (error) {
+            console.error('[App] Failed to setup WebSocket listeners:', error);
+        }
     }
 }
 
