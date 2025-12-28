@@ -8,6 +8,7 @@
 /wol-go.exe
 build/
 dist/
+wol-go-linux-amd64
 
 # Test binary, built with `go test -c`
 *.test
