@@ -50,6 +50,7 @@ class WebSocketClient {
 
             this.ws.onopen = () => {
                 this.status = 'connected';
+                this.lastConnectTime = Date.now(); // 更新最后连接时间
                 console.log('[WebSocket] Connected successfully');
                 this.emit('connected', {});
 
@@ -140,9 +141,9 @@ class WebSocketClient {
             // 页面重新可见时，检查连接状态
             const timeSinceLastConnect = Date.now() - this.lastConnectTime;
 
-            // 如果超过 30 秒没有连接尝试，强制重新连接
-            if (timeSinceLastConnect > 30000 || !this.isConnected()) {
-                console.log('[WebSocket] Page visible after long time, reconnecting...');
+            // 如果超过 5 分钟没有连接尝试，强制重新连接
+            if (timeSinceLastConnect > 300000 || !this.isConnected()) {
+                console.log('[WebSocket] Page visible after long time, refreshing data...');
                 this.emit('page_visible', { timeSinceLastConnect });
 
                 // 如果连接已断开，尝试重新连接
