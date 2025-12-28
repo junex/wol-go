@@ -44,3 +44,6 @@ debug
 
 # Application data
 appdata/
+
+# Deploy bat
+deploy-*.bat
